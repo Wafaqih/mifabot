@@ -1,0 +1,24 @@
+# Runtime configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Node.js / TypeScript
+node_modules/
+dist/
+coverage/
+.npm-cache/
+*.tsbuildinfo
+
+# Application files
+logs/
+database/backups/
+storage/proofs/*
+!storage/proofs/.gitkeep
+storage/baileys-auth/
+storage/google-service-account.json
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
