@@ -15,8 +15,8 @@ logs/
 *.log
 .deploy-backups/
 database/backups/
-# Runtime data: WhatsApp sessions, proof files, and service-account credentials.
-storage/
+# Runtime data at the project root: WhatsApp sessions, proof files, and service-account credentials.
+/storage/
 
 # Editor / OS
 .DS_Store
