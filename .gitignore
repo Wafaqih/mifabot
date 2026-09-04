@@ -13,10 +13,8 @@ coverage/
 # Application files
 logs/
 database/backups/
-storage/proofs/*
-!storage/proofs/.gitkeep
-storage/baileys-auth/
-storage/google-service-account.json
+# Runtime data: WhatsApp sessions, proof files, and service-account credentials.
+storage/
 
 # Editor / OS
 .DS_Store
