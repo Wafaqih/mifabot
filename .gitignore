@@ -12,6 +12,8 @@ coverage/
 
 # Application files
 logs/
+*.log
+.deploy-backups/
 database/backups/
 # Runtime data: WhatsApp sessions, proof files, and service-account credentials.
 storage/
