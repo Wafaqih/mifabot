@@ -113,4 +113,32 @@ jobs:
           echo "Commit: $(git rev-parse --short HEAD)"
           pm2 status mifabot
           pm2 describe mifabot
+
+          auth_dir=$(sed -n 's/^[[:space:]]*BAILEYS_AUTH_DIR[[:space:]]*=[[:space:]]*//p' .env | tail -n 1 | tr -d '\r')
+          if [ -z "$auth_dir" ]; then
+            echo "Baileys session: konfigurasi tidak ditemukan"
+          else
+            case "$auth_dir" in
+              ./*) auth_dir="$PWD/${auth_dir#./}" ;;
+            esac
+            if [ -d "$auth_dir" ] && [ -n "$(find "$auth_dir" -type f -print -quit)" ]; then
+              echo "Baileys session: tersedia"
+            else
+              echo "Baileys session: tidak tersedia"
+            fi
+          fi
+
+          last_connection_event=$( {
+            tail -n 200 "$HOME/.pm2/logs/mifabot-out.log" 2>/dev/null || true
+            tail -n 200 "$HOME/.pm2/logs/mifabot-error.log" 2>/dev/null || true
+          } | grep -E 'MIFABOT tersambung ke WhatsApp|Scan QR berikut|Sesi WhatsApp keluar|Koneksi WhatsApp terputus|Gagal menyambung kembali|MIFABOT gagal dinyalakan' | tail -n 1 || true)
+          case "$last_connection_event" in
+            *"MIFABOT tersambung ke WhatsApp"*) echo "WhatsApp connection: tersambung" ;;
+            *"Scan QR berikut"*) echo "WhatsApp connection: menunggu scan QR" ;;
+            *"Sesi WhatsApp keluar"*) echo "WhatsApp connection: sesi keluar" ;;
+            *"Koneksi WhatsApp terputus"*) echo "WhatsApp connection: terputus, mencoba menyambung" ;;
+            *"Gagal menyambung kembali"*) echo "WhatsApp connection: gagal menyambung kembali" ;;
+            *"MIFABOT gagal dinyalakan"*) echo "WhatsApp connection: startup gagal" ;;
+            *) echo "WhatsApp connection: status belum terdeteksi" ;;
+          esac
           REMOTE_SCRIPT
