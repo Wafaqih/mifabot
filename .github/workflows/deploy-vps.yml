@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      diagnostics:
+        description: "Tampilkan status dan log PM2 tanpa melakukan deploy"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -41,6 +47,7 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Pull, build, and restart MIFABOT
+        if: inputs.diagnostics != true
         shell: bash
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -81,4 +88,30 @@ jobs:
           pm2 restart mifabot --update-env
           pm2 save
           pm2 status mifabot
+          REMOTE_SCRIPT
+
+      - name: Diagnose MIFABOT runtime
+        if: inputs.diagnostics == true
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          ssh \
+            -i ~/.ssh/mifabot_deploy \
+            -p "$VPS_PORT" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" 'bash -se' <<'REMOTE_SCRIPT'
+          set -euo pipefail
+          if [ -s "$HOME/.nvm/nvm.sh" ]; then
+            . "$HOME/.nvm/nvm.sh"
+          fi
+          cd /home/ubuntu/mifabot
+          echo "Commit: $(git rev-parse --short HEAD)"
+          pm2 status mifabot
+          pm2 describe mifabot
+          pm2 logs mifabot --lines 100 --nostream
           REMOTE_SCRIPT
