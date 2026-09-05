@@ -59,6 +59,16 @@ jobs:
           set -euo pipefail
           cd /home/ubuntu/mifabot
 
+          # SSH commands run non-interactively, so load NVM explicitly when
+          # Node.js was installed through it on the VPS.
+          if [ -s "$HOME/.nvm/nvm.sh" ]; then
+            . "$HOME/.nvm/nvm.sh"
+          fi
+          if ! command -v npm >/dev/null 2>&1; then
+            echo "npm tidak ditemukan. Pastikan Node.js/NVM tersedia untuk user deployment VPS."
+            exit 1
+          fi
+
           if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
             echo "Deployment dibatalkan: ada perubahan lokal yang belum tercatat di VPS."
             git status --short
