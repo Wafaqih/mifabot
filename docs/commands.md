@@ -42,6 +42,35 @@ Nama tagihan harus tepat dan bill berjalan harus masih memiliki sisa. Channel
 cash dapat langsung diajukan; channel non-cash meminta foto bukti JPG, PNG,
 atau WebP maksimal 5 MB.
 
+## Jadwal kegiatan
+
+Admin atau Super Admin membuat jadwal melalui chat pribadi dengan command:
+
+```text
+Buat jadwal
+```
+
+Bot kemudian meminta nama kegiatan dan jenis jadwal. Jadwal harian dan mingguan
+selalu mulai berlaku pada tanggal saat jadwal dibuat, sehingga bot tidak meminta
+tanggal mulai.
+
+| Jenis | Data yang diminta setelah dipilih | Perilaku |
+| --- | --- | --- |
+| Harian | Jam (`HH:MM`) dan pola petugas | Berjalan setiap hari sejak dibuat. |
+| Mingguan | Jam (`HH:MM`) dan nama hari, misalnya `Minggu` | Berjalan setiap minggu pada hari yang dipilih sejak dibuat. |
+| Bulanan | Jam, interval bulan, dan tanggal dalam bulan | Mengikuti interval dan tanggal yang dipilih. |
+| Custom | Mode interval atau tanggal khusus | Meminta tanggal mulai atau tanggal khusus sesuai mode. |
+
+Contoh alur jadwal kebersihan setiap Minggu pukul 06.00:
+
+```text
+Buat jadwal
+Kebersihan gabungan
+Mingguan
+06:00
+Minggu
+```
+
 ### Membayar tunggakan
 
 Gunakan command berikut untuk membayar tunggakan dari satu nama tagihan:

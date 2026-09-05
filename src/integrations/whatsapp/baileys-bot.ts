@@ -316,7 +316,7 @@ type ScheduleCreationStage =
   | "TYPE"
   | "CUSTOM_MODE"
   | "START"
-  | "INTERVAL"
+  | "TIME"
   | "WEEKLY_DAYS"
   | "MONTHLY_DAYS"
   | "CUSTOM_INTERVAL"
@@ -378,6 +378,11 @@ const weekdayLookup: Record<string, number> = {
 function parseScheduleStart(value: string): { date: string; time: string } | null {
   const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})\s+([01]\d|2[0-3]):[0-5]\d$/);
   return match ? { date: match[1], time: match[2] } : null;
+}
+
+function parseScheduleTime(value: string): string | null {
+  const time = value.trim();
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : null;
 }
 
 function parseScheduleWeekdays(value: string): number[] | null {
@@ -1278,10 +1283,18 @@ async function handlePendingScheduleCreation(
       return true;
     }
     pending.type = type;
-    pending.stage = type === "CUSTOM" ? "CUSTOM_MODE" : "START";
-    await replyToConversation(message, type === "CUSTOM"
-      ? "Pilih mode custom:\n1. Interval (mis. setiap 3 hari)\n2. Tanggal khusus"
-      : "Masukkan tanggal mulai dan jam. Format: YYYY-MM-DD HH:MM");
+    if (type !== "CUSTOM") {
+      pending.startDate = currentDateInAppTimezone();
+      pending.intervalValue = 1;
+      pending.stage = "TIME";
+      await replyToConversation(
+        message,
+        `Masukkan jam kegiatan. Format: HH:MM. Jadwal berlaku sejak ${pending.startDate}.`,
+      );
+      return true;
+    }
+    pending.stage = "CUSTOM_MODE";
+    await replyToConversation(message, "Pilih mode custom:\n1. Interval (mis. setiap 3 hari)\n2. Tanggal khusus");
     return true;
   }
 
@@ -1310,43 +1323,38 @@ async function handlePendingScheduleCreation(
     }
     pending.startDate = start.date;
     pending.startTime = start.time;
-    if (pending.type === "DAILY") {
-      pending.stage = "INTERVAL";
-      await replyToConversation(message, "Berulang setiap berapa hari? Kirim angka, misalnya 1.");
-    } else if (pending.type === "WEEKLY") {
-      pending.stage = "WEEKLY_DAYS";
-      await replyToConversation(message, "Berulang setiap berapa minggu dan pada hari apa? Format: <angka> | Senin, Rabu. Contoh: 1 | Minggu");
-    } else if (pending.type === "MONTHLY") {
-      pending.stage = "MONTHLY_DAYS";
-      await replyToConversation(message, "Berulang setiap berapa bulan dan tanggal berapa? Format: <angka> | 1,15. Contoh: 1 | 1");
-    } else {
-      pending.stage = "CUSTOM_INTERVAL";
-      await replyToConversation(message, "Masukkan interval custom. Contoh: 3 hari, 2 minggu, atau 1 bulan.");
-    }
+    pending.stage = "CUSTOM_INTERVAL";
+    await replyToConversation(message, "Masukkan interval custom. Contoh: 3 hari, 2 minggu, atau 1 bulan.");
     return true;
   }
 
-  if (pending.stage === "INTERVAL") {
-    const interval = Number(value);
-    if (!Number.isSafeInteger(interval) || interval < 1 || interval > 366) {
-      await replyToConversation(message, "Interval harus berupa angka antara 1 dan 366.");
+  if (pending.stage === "TIME") {
+    const time = parseScheduleTime(value);
+    if (!time) {
+      await replyToConversation(message, "Format jam belum benar. Gunakan HH:MM, misalnya 06:00.");
       return true;
     }
-    pending.intervalValue = interval;
-    pending.stage = "ROSTER_MODE";
-    await replyToConversation(message, "Pola petugas harian:\n1. Petugas sama setiap hari\n2. Petugas berbeda berdasarkan hari dalam minggu");
+    pending.startTime = time;
+    if (pending.type === "DAILY") {
+      pending.stage = "ROSTER_MODE";
+      await replyToConversation(message, "Pola petugas harian:\n1. Petugas sama setiap hari\n2. Petugas berbeda berdasarkan hari dalam minggu");
+    } else if (pending.type === "WEEKLY") {
+      pending.stage = "WEEKLY_DAYS";
+      await replyToConversation(message, "Jadwal mingguan dilakukan setiap hari apa? Masukkan nama hari, misalnya Minggu atau Selasa, Jumat.");
+    } else {
+      pending.stage = "MONTHLY_DAYS";
+      await replyToConversation(message, "Berulang setiap berapa bulan dan tanggal berapa? Format: <angka> | 1,15. Contoh: 1 | 1");
+    }
     return true;
   }
 
   if (pending.stage === "WEEKLY_DAYS") {
-    const [intervalText, daysText] = value.split("|").map((part) => part.trim());
-    const interval = Number(intervalText);
-    const days = daysText ? parseScheduleWeekdays(daysText) : null;
-    if (!Number.isSafeInteger(interval) || interval < 1 || interval > 366 || !days) {
-      await replyToConversation(message, "Format belum benar. Contoh: 1 | Minggu atau 2 | Selasa, Jumat.");
+    const days = parseScheduleWeekdays(value);
+    if (!days) {
+      await replyToConversation(message, "Hari belum benar. Contoh: Minggu atau Selasa, Jumat.");
       return true;
     }
-    pending.intervalValue = interval;
+    pending.intervalValue = 1;
     pending.weeklyDays = days;
     pending.stage = "MEMBERS";
     await replyToConversation(message, "Masukkan username/nomor WhatsApp petugas, pisahkan dengan koma.");
