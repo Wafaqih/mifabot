@@ -113,5 +113,4 @@ jobs:
           echo "Commit: $(git rev-parse --short HEAD)"
           pm2 status mifabot
           pm2 describe mifabot
-          pm2 logs mifabot --lines 100 --nostream
           REMOTE_SCRIPT
