@@ -22,27 +22,18 @@ const baseRecipient: BillingReminderRecipient = {
   sisa: 75000,
 };
 
-test("automatic reminder messages describe H-, H-0, and H+ contexts", () => {
-  const beforeDue = buildAutomaticBillingReminderMessage({
-    ...baseRecipient,
-    offsetDays: -3,
-  });
-  assert.match(beforeDue, /Mang budi/);
-  assert.match(beforeDue, /akan jatuh tempo/i);
-  assert.match(beforeDue, /Rp75\.000/);
-
-  const onDueDate = buildAutomaticBillingReminderMessage({
-    ...baseRecipient,
-    offsetDays: 0,
-  });
-  assert.match(onDueDate, /Hari ini adalah jatuh tempo/i);
-
-  const afterDue = buildAutomaticBillingReminderMessage({
-    ...baseRecipient,
-    offsetDays: 3,
-  });
-  assert.match(afterDue, /telah melewati jatuh tempo/i);
-  assert.match(afterDue, /Bayar SPP <nominal>/);
+test("automatic reminders use universal wording without due-date claims at every offset", () => {
+  for (const offsetDays of [-3, 0, 3]) {
+    const message = buildAutomaticBillingReminderMessage({
+      ...baseRecipient,
+      offsetDays,
+    });
+    assert.equal(message, buildManualBillingReminderMessage(baseRecipient));
+    assert.match(message, /Mang budi/);
+    assert.match(message, /Rp75\.000/);
+    assert.doesNotMatch(message, /jatuh tempo|melewati|September|2026-09-05/i);
+    assert.match(message, /Bayar SPP <nominal>/);
+  }
 });
 
 test("manual reminder message is generic and retains bill snapshot data", () => {
@@ -56,6 +47,11 @@ test("manual reminder message is generic and retains bill snapshot data", () => 
   assert.match(message, /pengingat tagihan Iuran Makan/i);
   assert.match(message, /Sisa tagihan: Rp75\.000/);
   assert.match(message, /Bayar Iuran Makan <nominal>/);
+  assert.match(message, /Bayar Iuran Makan lunas/);
+  assert.match(message, /Pilih metode pembayaran/);
+  assert.match(message, /kirim bukti jika diminta/);
+  assert.match(message, /Tunggu konfirmasi verifikasi/);
+  assert.doesNotMatch(message, /jatuh tempo/i);
 });
 
 test("manual group reminder reports the accumulated current-period totals", () => {

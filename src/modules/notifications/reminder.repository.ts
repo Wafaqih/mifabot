@@ -303,7 +303,7 @@ export async function findAutomaticBillingReminderRecipients(
     `SELECT u.id AS user_id, u.username, u.jenis_kelamin, u.nomor_whatsapp,
             b.id AS bill_id, b.billing_definition_id,
             COALESCE(b.nama_tagihan_snapshot, d.nama) AS billing_name,
-            b.jatuh_tempo,
+            to_char(b.jatuh_tempo, 'YYYY-MM-DD') AS jatuh_tempo,
             b.nominal - COALESCE(SUM(pa.nominal_alokasi), 0) AS sisa,
             r.id AS rule_id, r.offset_days
      FROM mifabot.billing_reminder_rules r
@@ -347,7 +347,7 @@ export async function findManualBillingReminderRecipients(
     `SELECT u.id AS user_id, u.username, u.jenis_kelamin, u.nomor_whatsapp,
             b.id AS bill_id, b.billing_definition_id,
             COALESCE(b.nama_tagihan_snapshot, d.nama) AS billing_name,
-            b.jatuh_tempo,
+            to_char(b.jatuh_tempo, 'YYYY-MM-DD') AS jatuh_tempo,
             b.nominal - COALESCE(SUM(pa.nominal_alokasi), 0) AS sisa
      FROM mifabot.bills b
      JOIN mifabot.billing_definitions d ON d.id = b.billing_definition_id

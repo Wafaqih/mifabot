@@ -633,7 +633,10 @@ export function parseSetBillingReminderCommand(
   const offsets = match[2]
     .trim()
     .split(/\s+/)
-    .map((offset) => Number.parseInt(offset.slice(1), 10));
+    .map((offset) => {
+      const days = Number.parseInt(offset.slice(1), 10);
+      return days === 0 ? 0 : days;
+    });
   if (offsets.some((offset) => !Number.isSafeInteger(offset))) {
     return null;
   }

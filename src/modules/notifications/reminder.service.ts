@@ -73,34 +73,21 @@ function greetingFor(recipient: BillingReminderRecipient): string {
 }
 
 function paymentInstruction(recipient: BillingReminderRecipient): string {
-  return `Ketik *Bayar ${recipient.billingName} <nominal>* untuk melakukan pembayaran.`;
+  return [
+    "*Cara pembayaran melalui MIFABOT:*",
+    `1. Balas chat ini dengan *Bayar ${recipient.billingName} <nominal>*. Ganti <nominal> dengan jumlah yang ingin dibayar (angka tanpa titik atau koma).`,
+    `   Untuk membayar penuh, ketik *Bayar ${recipient.billingName} lunas*.`,
+    "2. Pilih metode pembayaran yang tersedia di bot.",
+    "3. Ikuti instruksi pembayaran dan kirim bukti jika diminta oleh bot.",
+    "4. Tunggu konfirmasi verifikasi pembayaran dari bot.",
+  ].join("\n");
 }
 
-/** Generic message for a due-date-based automatic reminder. */
+/** Scheduled reminders use the same wording regardless of the reminder offset. */
 export function buildAutomaticBillingReminderMessage(
   recipient: BillingReminderRecipient,
 ): string {
-  const opening = `Assalamu'alaikum ${greetingFor(recipient)} ${recipient.username},`;
-  const amount = formatRupiah(recipient.sisa);
-  const dueDate = formatDate(recipient.jatuhTempo);
-  const offset = recipient.offsetDays ?? 0;
-
-  let context: string;
-  if (offset < 0) {
-    context = `Tagihan ${recipient.billingName} Anda yang masih tersisa ${amount} akan jatuh tempo pada ${dueDate}.`;
-  } else if (offset === 0) {
-    context = `Hari ini adalah jatuh tempo tagihan ${recipient.billingName} Anda. Sisa tagihan Anda adalah ${amount}.`;
-  } else {
-    context = `Tagihan ${recipient.billingName} Anda telah melewati jatuh tempo ${dueDate}. Sisa tagihan Anda adalah ${amount}.`;
-  }
-
-  return [
-    opening,
-    "",
-    context,
-    "Pembayaran dapat dilakukan secara dicicil atau penuh.",
-    paymentInstruction(recipient),
-  ].join("\n");
+  return buildManualBillingReminderMessage(recipient);
 }
 
 /** Generic message used by a PJ/Super Admin manual dispatch. */
@@ -112,9 +99,12 @@ export function buildManualBillingReminderMessage(
     "",
     `Ini adalah pengingat tagihan ${recipient.billingName} Anda.`,
     `Sisa tagihan: ${formatRupiah(recipient.sisa)}.`,
-    `Jatuh tempo: ${formatDate(recipient.jatuhTempo)}.`,
+    "Mohon lakukan pembayaran sebelum tenggat waktu.",
     "Pembayaran dapat dilakukan secara dicicil atau penuh.",
+    "",
     paymentInstruction(recipient),
+    "",
+    "Terima kasih atas perhatian dan kesediaannya menyelesaikan pembayaran.",
   ].join("\n");
 }
 
